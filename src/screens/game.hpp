@@ -19,6 +19,8 @@ private:
 	void fillQueue();
 	void generateTetromino();
 	void sanitizeCurrent();
+	void calculateGhost();
+	void resetCurrent();
 
 	int width = 10;
 	int height = 20;

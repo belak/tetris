@@ -3,19 +3,19 @@
 #include <allegro5/allegro_color.h>
 
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
 Tetromino::Tetromino() {
 	loc = Vect(0, 0);
-	int type = rand() % 6;
 
 	// http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
 	float hue;
 	modff(rand() + 0.618033988749895f, &hue);
 	color = al_color_hsv(hue, 0.5, 0.95);
 
-	switch (type) {
+	switch (rand() % 6) {
 		case 0:
 			// L
 			matrix = {
@@ -81,24 +81,24 @@ Tetromino::~Tetromino() {
 }
 
 pair<Vect, Vect> Tetromino::bound() {
-	Vect small;
-	Vect large;
+	Vect small = Vect(-1, -1);
+	Vect large = Vect(0, 0);
 
 	for (int i = 0; i < matrix.size(); i++) {
 		for (int j = 0; j < matrix.size(); j++) {
 			auto block = matrix[j][i];
 			if (block.on) {
-				if (small.x > i) {
+				if (small.x == -1 || small.x > i) {
 					small.x = i;
 				}
-				if (large.x > i) {
+				if (small.y == -1 || small.y > j) {
+					small.y = j;
+				}
+				if (large.x < i) {
 					large.x = i;
 				}
-				if (small.x < j) {
-					small.x = j;
-				}
-				if (large.x < j) {
-					large.x = j;
+				if (large.y < j) {
+					large.y = j;
 				}
 			}
 		}

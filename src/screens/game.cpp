@@ -37,22 +37,23 @@ GameScreen::GameScreen() {
 	start_y = margin;
 
 	generateTetromino();
+	calculateGhost();
 }
 
 GameScreen::~GameScreen() {
 	cout << "Destroying Game Screen" << endl;
 }
 
+void GameScreen::resetCurrent() {
+	auto bound = current.bound();
+	int x = width / 2 - (bound.second.x - bound.first.x) / 2 - 1;
+	int y = -(bound.second.y - bound.first.y) - 1;
+	current.loc = Vect(x, y);
+}
+
 void GameScreen::fillQueue() {
 	while (upcoming.size() < QUEUE_SIZE) {
-		auto temp = Tetromino();
-		temp.loc = Vect(width / 2, 0);
-
-		// TODO: Does this work?
-		auto bound = temp.bound();
-		temp.loc.y = -bound.first.y;
-
-		upcoming.push_back(temp);
+		upcoming.push_back(Tetromino());
 	}
 }
 
@@ -61,9 +62,32 @@ void GameScreen::generateTetromino() {
 
 	current = upcoming.front();
 	upcoming.pop_front();
+	resetCurrent();
 	sanitizeCurrent();
 
 	fillQueue();
+}
+
+void GameScreen::calculateGhost() {
+	ghost = current;
+	ghost.color = al_map_rgb(128, 128, 128);
+	bool found = false;
+	for (int count = ghost.loc.y; !found && count < height; count++) {
+		ghost.loc.y += 1;
+		for (int i = 0; !found && i < ghost.matrix.size(); i++) {
+			for (int j = 0; !found && j < ghost.matrix.size(); j++) {
+				auto block = ghost.matrix[j][i];
+				int x = (int)(ghost.loc.x + i);
+				int y = (int)(ghost.loc.y + j);
+				if (block.on && (y >= height || (y >= 0 && grid[y][x].on))) {
+					// Move back up and save location
+					ghost.loc.y -= 1;
+					found = true;
+					break;
+				}
+			}
+		}
+	}
 }
 
 void GameScreen::update() {
@@ -89,12 +113,7 @@ void GameScreen::update() {
 							store = current;
 							current = temp;
 
-							// TODO: Move this into another method
-							current.loc = Vect(width / 2, 0);
-							// TODO: Does this work?
-							auto bound = temp.bound();
-							current.loc.y = -bound.first.y;
-
+							resetCurrent();
 							sanitizeCurrent();
 						} else {
 							has_stored = true;
@@ -185,25 +204,7 @@ void GameScreen::update() {
 		}
 
 		// Now that input is done, change the ghost
-		ghost = current;
-		ghost.color = al_map_rgb(128, 128, 128);
-		bool found = false;
-		for (int count = ghost.loc.y; !found && count < height; count++) {
-			ghost.loc.y += 1;
-			for (int i = 0; i < current.matrix.size(); i++) {
-				for (int j = 0; j < current.matrix.size(); j++) {
-					auto block = current.matrix[j][i];
-					int x = (int)(ghost.loc.x + i);
-					int y = (int)(ghost.loc.y + j);
-					if (block.on && (y >= height || (y >= 0 && grid[y][x].on))) {
-						// Move back up and save location
-						ghost.loc.y -= 1;
-						found = true;
-						break;
-					}
-				}
-			}
-		}
+		calculateGhost();
 
 		if (hyper_speed) {
 			move_timer = FALL_LENGTH;
@@ -264,8 +265,9 @@ void GameScreen::update() {
 					grid.insert(grid.begin(), vector<Block>(width));
 				}
 
+				// Pop from the queue and recalculate the ghost
 				generateTetromino();
-				sanitizeCurrent();
+				calculateGhost();
 			}
 			
 			move_timer = 0.0;
@@ -301,7 +303,7 @@ void GameScreen::render() {
 			start_x - line_size, start_y - line_size,
 			al_map_rgb(255, 255, 255), line_size);
 
-	if (has_stored) {
+	/*if (has_stored) {
 		auto bound = store.bound();
 		float cx = bound.second.x - bound.first.x;
 		float cy = bound.second.y - bound.first.y;
@@ -313,7 +315,7 @@ void GameScreen::render() {
 						block.color, line_size);
 			}
 		}
-	}
+	}*/
 
 
 	// Draw the grid. A digital frontier. I tried to picture clusters of information as they moved
@@ -341,7 +343,7 @@ void GameScreen::render() {
 		for (int i = 0; i < current.matrix.size(); i++) {
 			for (int j = 0; j < current.matrix.size(); j++) {
 				auto block = current.matrix[j][i];
-				if (block.on && ghost.loc.y + j >= 0 && ghost.loc.y + j < height) {
+				if (block.on && (int) ghost.loc.y + j >= 0 && (int) ghost.loc.y + j < height) {
 					al_draw_rectangle(
 							start_x + (ghost.loc.x + i) * cell_size + line_size,
 							start_y + (ghost.loc.y + j) * cell_size + line_size,
@@ -356,7 +358,7 @@ void GameScreen::render() {
 		for (int i = 0; i < current.matrix.size(); i++) {
 			for (int j = 0; j < current.matrix.size(); j++) {
 				auto block = current.matrix[j][i];
-				if (block.on && current.loc.y + j >= 0 && current.loc.y + j < height) {
+				if (block.on && (int) current.loc.y + j >= 0 && (int) current.loc.y + j < height) {
 					al_draw_rectangle(
 							start_x + (current.loc.x + i) * cell_size + line_size,
 							start_y + (current.loc.y + j) * cell_size + line_size,

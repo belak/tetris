@@ -8,13 +8,13 @@ public:
 		Vect(0, 0);
 	}
 
-	Vect(float in_x, float in_y) {
+	Vect(int in_x, int in_y) {
 		x = in_x;
 		y = in_y;
 	}
 
-	float x;
-	float y;
+	int x;
+	int y;
 };
 
 
