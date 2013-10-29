@@ -13,8 +13,10 @@ using namespace std;
 // TODO:
 // Display held piece
 // Display upcoming
-// Separate stabilize timer
 // Make it SRS standard
+// Wall kicks
+// 2 piece buffer above grid (and change death to come with this if something spawns on top)
+// Options for lock style, etc
 
 GameScreen::GameScreen() {
 	cout << "Creating Game Screen" << endl;
@@ -285,7 +287,6 @@ void GameScreen::update() {
 		// If we need to set it in stone
 		if (stabilize) {
 			// SRS has a separate lock timer, so if a movement happens, we can't stabilize
-			// TODO: Fix this so it doesn't have to be inside a movement timer
 			if (lock_timer > timer_freq) {
 				running = false;
 
