@@ -16,12 +16,12 @@ public:
 	void render();
 
 private:
+	void fillQueue();
 	void generateTetromino();
 	void sanitizeCurrent();
 
 	int width = 10;
 	int height = 20;
-	int height_buffer = 0;
 	int margin = 2;
 	int cell_size = 0;
 	int start_x = 0;
@@ -36,5 +36,5 @@ private:
 	Tetromino current;
 	Tetromino store;
 	Tetromino ghost;
-	std::queue<Tetromino> upcoming;
+	std::deque<Tetromino> upcoming;
 };

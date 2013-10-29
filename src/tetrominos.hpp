@@ -6,15 +6,12 @@
 
 class Block {
 public:
-	Block() {
-		Block(0, 0);
-	}
-	Block(float x, float y) {
-		offset = Vect(x, y);
+	Block() {}
+	Block(int block_on) {
+		on = block_on != 0;
 	}
 
 	bool on = false;
-	Vect offset;
 	ALLEGRO_COLOR color = al_map_rgb(255, 255, 255);
 };
 
@@ -23,9 +20,9 @@ public:
 	Tetromino();
 	~Tetromino();
 	void rotate();
+	std::pair<Vect, Vect> bound();
 
-	std::vector<Block> blocks;
+	std::vector<std::vector<Block>> matrix;
 	Vect loc;
-	int type;
 	ALLEGRO_COLOR color;
 };
