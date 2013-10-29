@@ -20,6 +20,7 @@ private:
 	void generateTetromino();
 	void sanitizeCurrent();
 	void calculateGhost();
+	void cleanGrid();
 	void resetCurrent();
 
 	int width = 10;
@@ -32,7 +33,9 @@ private:
 	bool speed_run = false;
 	bool has_stored = false;
 	float move_timer = 0.0;
+	float lock_timer = 0.0;
 	bool running = true;
+	bool stabilize = false;
 
 	std::vector<std::vector<Block>> grid;
 	Tetromino current;

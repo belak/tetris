@@ -151,6 +151,7 @@ namespace Director {
 			screens.back()->update();
 
 			// Simple frame skipping
+			// TODO: If game is running too slow, this won't display anything
 			if (running && al_is_event_queue_empty(events)) {
 				al_clear_to_color(al_map_rgb(0, 0, 0));
 				screens.back()->render();

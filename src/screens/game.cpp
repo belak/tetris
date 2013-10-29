@@ -13,20 +13,14 @@ using namespace std;
 // TODO:
 // Display held piece
 // Display upcoming
-// Fix rotations
-// Separate stabalize timer
+// Separate stabilize timer
 // Make it SRS standard
 
 GameScreen::GameScreen() {
 	cout << "Creating Game Screen" << endl;
 
-	for (int i = 0; i < height; i++) {
-		vector<Block> temp;
-		for (int j = 0; j < width; j++) {
-			temp.push_back(Block());
-		}
-		grid.push_back(temp);
-	}
+	// Make sure the grid is large enough
+	cleanGrid();
 
 	cell_size = (Director::height - 2 * margin) / height;
 	
@@ -44,36 +38,75 @@ GameScreen::~GameScreen() {
 	cout << "Destroying Game Screen" << endl;
 }
 
+void GameScreen::cleanGrid() {
+	// Remove lines if they're full
+	// NOTE:we do this in reverse order
+	// so we can do it all in one swoop without
+	// the ids changing on us
+	for (int i = grid.size() - 1; i >= 0; i--) {
+		bool on = true;
+		for (int j = 0; j < grid[i].size(); j++) {
+			// If we find one that isn't on, we can't remove it
+			if (!grid[i][j].on) {
+				on = false;
+				break;
+			}
+		}
+
+		if (on) {
+			cout << "Removing line" << endl;
+			grid.erase(grid.begin() + i);
+		}
+	}
+
+	// Push new lines onto the beginning until we're at the right size
+	while (grid.size() < height) {
+		grid.insert(grid.begin(), vector<Block>(width));
+	}
+
+}
+
 void GameScreen::resetCurrent() {
 	auto bound = current.bound();
-	int x = width / 2 - (bound.second.x - bound.first.x) / 2 - 1;
-	int y = -(bound.second.y - bound.first.y) - 1;
-	current.loc = Vect(x, y);
+	current.loc = Vect(
+			width / 2 - (bound.second.x - bound.first.x) / 2 - 1,
+			-(bound.second.y - bound.first.y) - 1);
+	sanitizeCurrent();
 }
 
 void GameScreen::fillQueue() {
+	// Make sure we have enough tetrominos for the queue
 	while (upcoming.size() < QUEUE_SIZE) {
 		upcoming.push_back(Tetromino());
 	}
 }
 
 void GameScreen::generateTetromino() {
+	// Make sure we have something to pop
 	fillQueue();
 
+	// Grab the current and put it in the right place
 	current = upcoming.front();
 	upcoming.pop_front();
 	resetCurrent();
-	sanitizeCurrent();
 
 	fillQueue();
 }
 
 void GameScreen::calculateGhost() {
+	// Copy ghost from the current
 	ghost = current;
+
+	// Make sure the color is right
 	ghost.color = al_map_rgb(128, 128, 128);
+
+	// Loop through from the current position
 	bool found = false;
 	for (int count = ghost.loc.y; !found && count < height; count++) {
+		// Move down a line
 		ghost.loc.y += 1;
+
+		// If one or more blocks are invalid, move back up and mark that spot as final
 		for (int i = 0; !found && i < ghost.matrix.size(); i++) {
 			for (int j = 0; !found && j < ghost.matrix.size(); j++) {
 				auto block = ghost.matrix[j][i];
@@ -97,7 +130,7 @@ void GameScreen::update() {
 
 		auto copy = current;
 		while(!al_is_event_queue_empty(Director::input)) {
-			bool stabalize = false;
+			bool sanitize = false;
 
 			ALLEGRO_EVENT iev;
 			al_wait_for_event(Director::input, &iev);
@@ -114,7 +147,6 @@ void GameScreen::update() {
 							current = temp;
 
 							resetCurrent();
-							sanitizeCurrent();
 						} else {
 							has_stored = true;
 							store = current;
@@ -146,17 +178,20 @@ void GameScreen::update() {
 							int y = (int)(current.loc.y + j);
 
 							// Not allowed to rotate if x or y aren't valid or there's a block there
-							if (current.matrix[j][i].on && (y < 0 || y >= height || x < 0 || x >= width || grid[y][x].on)) {
-								stabalize = true;
+							// Note that we ARE allowed to rotate above the grid
+							if (current.matrix[j][i].on && (y >= height || x < 0 || x >= width || (y >= 0 && grid[y][x].on))) {
+								sanitize = true;
 								break;
 							}
 						}
 					}
 
-					if (stabalize) {
+					if (sanitize) {
 						current = copy;
 					} else {
 						sanitizeCurrent();
+						calculateGhost();
+						lock_timer = 0.0;
 					}
 					
 					return;
@@ -174,6 +209,7 @@ void GameScreen::update() {
 					if (can_move) {
 						current.loc.x -= 1;
 						sanitizeCurrent();
+						lock_timer = 0.0;
 					}
 					break;
 				case ALLEGRO_KEY_RIGHT:
@@ -190,6 +226,7 @@ void GameScreen::update() {
 					if (can_move) {
 						current.loc.x += 1;
 						sanitizeCurrent();
+						lock_timer = 0.0;
 					}
 					break;
 				case ALLEGRO_KEY_SPACE:
@@ -199,6 +236,7 @@ void GameScreen::update() {
 			}
 		}
 
+		// If holding down, shrink the time before moving down
 		if (speed_run) {
 			timer_freq /= 4;
 		}
@@ -206,32 +244,52 @@ void GameScreen::update() {
 		// Now that input is done, change the ghost
 		calculateGhost();
 
+		// If jumping down, replace current's loc with the ghost's
+		// and force a stabilize
 		if (hyper_speed) {
 			move_timer = FALL_LENGTH;
 			current.loc = ghost.loc;
 		}
 
+		// Move the timers forward
 		move_timer += Director::tickLength;
+		lock_timer += Director::tickLength;
+
+		// If it's time for current to move down, do it
 		if (move_timer > timer_freq) {
 			current.loc.y += 1;
-			// If any blocks will collide, move it up one and set it in stone
-			bool stabalize = false;
+
+			// If any blocks will collide, move it back up one and set it in stone
 			for (int i = 0; i < current.matrix.size(); i++) {
 				for (int j = 0; j < current.matrix.size(); j++) {
 					auto block = current.matrix[j][i];
 					int x = (int)(current.loc.x + i);
 					int y = (int)(current.loc.y + j);
 					if (block.on && (y >= height || (y >= 0 && grid[y][x].on))) {
-						stabalize = true;
+						if (!stabilize) {
+							// TODO: Determine if we should do this
+							lock_timer = 0.0;
+						}
+
+						stabilize = true;
+						current.loc.y -= 1;
 						break;
 					}
 				}
 			}
 
-			if (stabalize) {
-				current.loc.y -= 1;
-				
+			// Reset the movement timer every time we move
+			move_timer = 0.0;
+		}
+
+		// If we need to set it in stone
+		if (stabilize) {
+			// SRS has a separate lock timer, so if a movement happens, we can't stabilize
+			// TODO: Fix this so it doesn't have to be inside a movement timer
+			if (lock_timer > timer_freq) {
 				running = false;
+
+				// If all of the positions are above the top, we just lost
 				for (int i = 0; i < current.matrix.size(); i++) {
 					for (int j = 0; j < current.matrix.size(); j++) {
 						auto block = current.matrix[j][i];
@@ -244,33 +302,23 @@ void GameScreen::update() {
 					}
 				}
 
+				// If we just lost, we don't need to run any more calculations
 				if (!running) {
 					return;
 				}
 
-				for (int i = grid.size() - 1; i >= 0; i--) {
-					bool on = true;
-					for (int j = 0; j < grid[i].size(); j++) {
-						if (!grid[i][j].on) {
-							on = false;
-						}
-					}
-
-					if (on) {
-						grid.erase(grid.begin() + i);
-					}
-				}
-
-				while (grid.size() < height) {
-					grid.insert(grid.begin(), vector<Block>(width));
-				}
+				// Make sure we don't have anything to remove
+				cleanGrid();
 
 				// Pop from the queue and recalculate the ghost
 				generateTetromino();
 				calculateGhost();
+
+				// Block is now stabilized
+				stabilize = false;
+				lock_timer = 0.0;
+				move_timer = 0.0;
 			}
-			
-			move_timer = 0.0;
 		}
 	} else {
 		// If not running
