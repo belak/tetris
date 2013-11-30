@@ -14,7 +14,8 @@ using namespace std;
 // Display held piece
 // Display upcoming
 // Make it SRS standard
-// Wall kicks
+// Make sure move locks are done in right places
+// Make jump down instant in stead of waiting for a lock
 // 2 piece buffer above grid (and change death to come with this if something spawns on top)
 // Options for lock style, etc
 
@@ -38,6 +39,22 @@ GameScreen::GameScreen() {
 
 GameScreen::~GameScreen() {
 	cout << "Destroying Game Screen" << endl;
+}
+
+bool GameScreen::validPosition() {
+	for (int i = 0; i < current.matrix.size(); i++) {
+		for (int j = 0; j < current.matrix.size(); j++) {
+			int x = (int)(current.loc.x + i);
+			int y = (int)(current.loc.y + j);
+
+			// Not allowed to rotate if x or y aren't valid or there's a block there
+			// Note that we ARE allowed to rotate above the grid
+			if (current.matrix[j][i].on && (y >= height || x < 0 || x >= width || (y >= 0 && grid[y][x].on))) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 void GameScreen::cleanGrid() {
@@ -132,8 +149,6 @@ void GameScreen::update() {
 
 		auto copy = current;
 		while(!al_is_event_queue_empty(Director::input)) {
-			bool sanitize = false;
-
 			ALLEGRO_EVENT iev;
 			al_wait_for_event(Director::input, &iev);
 			if (iev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -163,7 +178,7 @@ void GameScreen::update() {
 						return;
 				}
 			} else if (iev.type == ALLEGRO_EVENT_KEY_CHAR) {
-				bool can_move = true;
+				bool found = false;
 
 				switch (iev.keyboard.keycode) {
 				case ALLEGRO_KEY_ESCAPE:
@@ -171,64 +186,48 @@ void GameScreen::update() {
 					Director::pop();
 					return;
 				case ALLEGRO_KEY_UP:
-					// TODO: Fix this - push over if possible, not just disable
 					current.rotate();
 
-					for (int i = 0; i < current.matrix.size(); i++) {
-						for (int j = 0; j < current.matrix.size(); j++) {
-							int x = (int)(current.loc.x + i);
-							int y = (int)(current.loc.y + j);
-
-							// Not allowed to rotate if x or y aren't valid or there's a block there
-							// Note that we ARE allowed to rotate above the grid
-							if (current.matrix[j][i].on && (y >= height || x < 0 || x >= width || (y >= 0 && grid[y][x].on))) {
-								sanitize = true;
-								break;
-							}
+					// Check all the wall kicks
+					// Take the first one that's valid
+					for (auto kick : current.kicks[current.current_kicks]) {
+						// Note that because the board is 0 at the top in stead of the bottom
+						// we subtract the current loc
+						current.loc.x += kick.first;
+						current.loc.y -= kick.second;
+						if (validPosition()) {
+							found = true;
+							break;
+						} else {
+							current.loc = copy.loc;
 						}
 					}
 
-					if (sanitize) {
-						current = copy;
-					} else {
+					// If we don't have a valid kick, reset the tetromino
+					if (found) {
 						sanitizeCurrent();
-						calculateGhost();
 						lock_timer = 0.0;
+					} else {
+						current = copy;
 					}
 					
 					return;
 				case ALLEGRO_KEY_LEFT:
-					for (int i = 0; i < current.matrix.size(); i++) {
-						for (int j = 0; j < current.matrix.size(); j++) {
-							int x = (int)(current.loc.x + i - 1);
-							int y = (int)(current.loc.y + j);
-							if (y > 0 && current.matrix[j][i].on && grid[y][x].on) {
-								can_move = false;
-								break;
-							}
-						}
-					}
-					if (can_move) {
-						current.loc.x -= 1;
+					current.loc.x -= 1;
+					if (validPosition()) {
 						sanitizeCurrent();
 						lock_timer = 0.0;
+					} else {
+						current.loc.x += 1;
 					}
 					break;
 				case ALLEGRO_KEY_RIGHT:
-					for (int i = 0; i < current.matrix.size(); i++) {
-						for (int j = 0; j < current.matrix.size(); j++) {
-							int x = (int)(current.loc.x + i + 1);
-							int y = (int)(current.loc.y + j);
-							if (y > 0 && current.matrix[j][i].on && grid[y][x].on) {
-								can_move = false;
-								break;
-							}
-						}
-					}
-					if (can_move) {
-						current.loc.x += 1;
+					current.loc.x += 1;
+					if (validPosition()) {
 						sanitizeCurrent();
 						lock_timer = 0.0;
+					} else {
+						current.loc.x -= 1;
 					}
 					break;
 				case ALLEGRO_KEY_SPACE:
@@ -259,29 +258,18 @@ void GameScreen::update() {
 
 		// If it's time for current to move down, do it
 		if (move_timer > timer_freq) {
-			current.loc.y += 1;
-
-			// If any blocks will collide, move it back up one and set it in stone
-			for (int i = 0; i < current.matrix.size(); i++) {
-				for (int j = 0; j < current.matrix.size(); j++) {
-					auto block = current.matrix[j][i];
-					int x = (int)(current.loc.x + i);
-					int y = (int)(current.loc.y + j);
-					if (block.on && (y >= height || (y >= 0 && grid[y][x].on))) {
-						if (!stabilize) {
-							// TODO: Determine if we should do this
-							lock_timer = 0.0;
-						}
-
-						stabilize = true;
-						current.loc.y -= 1;
-						break;
-					}
+			// Conveniently enough, we already know where this needs to go
+			// The ghost will be in the final location
+			if (current.loc == ghost.loc) {
+				if (!stabilize) {
+					lock_timer = 0.0;
 				}
+				stabilize = true;
+			} else {
+				// Reset the movement timer every time we move
+				move_timer = 0.0;
+				current.loc.y += 1;
 			}
-
-			// Reset the movement timer every time we move
-			move_timer = 0.0;
 		}
 
 		// If we need to set it in stone

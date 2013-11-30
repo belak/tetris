@@ -22,6 +22,7 @@ private:
 	void calculateGhost();
 	void cleanGrid();
 	void resetCurrent();
+	bool validPosition();
 
 	int width = 10;
 	int height = 20;

@@ -13,6 +13,10 @@ public:
 		y = in_y;
 	}
 
+	bool operator==(const Vect &v) {
+		return v.x == x && v.y == y;
+	}
+
 	int x;
 	int y;
 };

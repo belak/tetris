@@ -23,6 +23,9 @@ public:
 	std::pair<Vect, Vect> bound();
 
 	std::vector<std::vector<Block>> matrix;
+	std::vector<std::vector<std::pair<int, int>>> kicks;
 	Vect loc;
+	int state = 0;
+	int current_kicks = 0;
 	ALLEGRO_COLOR color;
 };
