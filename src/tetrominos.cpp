@@ -11,11 +11,11 @@ Tetromino::Tetromino() {
 	loc = Vect(0, 0);
 
 	// http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
-	float hue;
+	/*float hue;
 	modff(rand() + 0.618033988749895f, &hue);
-	color = al_color_hsv(hue, 0.5, 0.95);
+	color = al_color_hsv(hue, 0.5, 0.95);*/
 
-	switch (rand() % 6) {
+	switch (rand() % 7) {
 		case 0:
 			// L
 			matrix = {
@@ -23,6 +23,7 @@ Tetromino::Tetromino() {
 				{1, 1, 1},
 				{0, 0, 0}
 			};
+			color = al_map_rgb(0, 0, 255);
 			break;
 		case 1:
 			// L reversed
@@ -31,31 +32,57 @@ Tetromino::Tetromino() {
 				{1, 1, 1},
 				{0, 0, 0}
 			};
+			color = al_map_rgb(255, 165, 0);
 			break;
 		case 2:
 			// S
 			matrix = {
-				{0, 0, 1},
-				{1, 1, 1},
+				{0, 1, 1},
+				{1, 1, 0},
 				{0, 0, 0}
 			};
+			color = al_map_rgb(0, 255, 0);
 			break;
 		case 3:
 			// S reversed
 			matrix = {
-				{0, 0, 1},
+				{1, 1, 0},
+				{0, 1, 1},
+				{0, 0, 0}
+			};
+			color = al_map_rgb(255, 0, 0);
+			break;
+		case 4:
+			// T
+			matrix = {
+				{0, 1, 0},
 				{1, 1, 1},
 				{0, 0, 0}
 			};
-			break;
-		case 4:
+			color = al_map_rgb(128, 0, 128);
+		case 5:
 			// Cube
 			matrix = {
 				{1, 1},
 				{1, 1}
 			};
+			color = al_map_rgb(255, 255, 0);
+
+			// Special wall kicks
+			kicks = {
+				{{0,0}},
+				{{0,0}},
+				{{0,0}},
+				{{0,0}},
+				{{0,0}},
+				{{0,0}},
+				{{0,0}},
+				{{0,0}}
+			};
+
+
 			break;
-		case 5:
+		case 6:
 			// Line
 			matrix = {
 				{0, 0, 0, 0},
@@ -63,6 +90,7 @@ Tetromino::Tetromino() {
 				{0, 0, 0, 0},
 				{0, 0, 0, 0}
 			};
+			color = al_map_rgb(0, 255, 255);
 
 			// Special wall kicks
 			kicks = {

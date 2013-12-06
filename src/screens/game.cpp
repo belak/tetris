@@ -185,6 +185,9 @@ void GameScreen::update() {
 					// TODO: display a confirmation screen
 					Director::pop();
 					return;
+				case ALLEGRO_KEY_Z:
+					current.rotate();
+					current.rotate();
 				case ALLEGRO_KEY_UP:
 					current.rotate();
 
@@ -211,7 +214,7 @@ void GameScreen::update() {
 						current = copy;
 					}
 					
-					return;
+					break;
 				case ALLEGRO_KEY_LEFT:
 					current.loc.x -= 1;
 					if (validPosition()) {
