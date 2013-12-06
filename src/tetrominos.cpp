@@ -60,6 +60,7 @@ Tetromino::Tetromino() {
 				{0, 0, 0}
 			};
 			color = al_map_rgb(128, 0, 128);
+			break;
 		case 5:
 			// Cube
 			matrix = {
@@ -79,7 +80,6 @@ Tetromino::Tetromino() {
 				{{0,0}},
 				{{0,0}}
 			};
-
 
 			break;
 		case 6:

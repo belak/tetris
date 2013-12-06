@@ -17,8 +17,8 @@ public:
 		return v.x == x && v.y == y;
 	}
 
-	int x;
-	int y;
+	float x;
+	float y;
 };
 
 

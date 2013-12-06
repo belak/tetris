@@ -1,24 +1,15 @@
 #pragma once
 
 #include "../director.hpp"
+#include "../tetrominos.hpp"
 
 #include <vector>
 
-class BackgroundTetromino {
+class BackgroundTetromino : public Tetromino {
 public:
-	void reset(ALLEGRO_BITMAP *tile);
-	void render();
-
-	ALLEGRO_COLOR color;
-	ALLEGRO_BITMAP *tile = NULL;
-	int x = -1;
-	int y = -1;
-	float hw = 0;
-	float hh = 0;
+	void reset();
 	float scale = 1.0;
-	float angle = 0;
-	int speed = 0;
-	int flags = 0;
+	float speed = 0.0;
 };
 
 class BackgroundScreen : public Screen {
@@ -32,7 +23,7 @@ public:
 private:
 	void createObject();
 
-	int count = 30;
+	int count = 100;
+	float base_size = 1;
 	std::vector<BackgroundTetromino *> tetrominos;
-	std::vector<ALLEGRO_BITMAP *> shapes;
 };

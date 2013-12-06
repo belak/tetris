@@ -8,61 +8,33 @@
 
 using namespace std;
 
-void BackgroundTetromino::reset(ALLEGRO_BITMAP *input) {
-	tile = input;
-
-	hw = al_get_bitmap_width(tile) / 2.0;
-	hh = al_get_bitmap_height(tile) / 2.0;
-
-	angle = 2 * ALLEGRO_PI / 4 * (rand() % 4);
-
-	// TODO: offset by the graphic size
-	x = rand() % Director::width;
-	if (y == -1) {
-		y = rand() % Director::height;
-	} else {
-		y = -hh * scale;
-	}
+void BackgroundTetromino::reset() {
+	loc.x = rand() % Director::width;
+	loc.y = -20;
 
 	// http://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
 	float hue;
 	modff(rand() + 0.618033988749895f, &hue);
 
 	color = al_color_hsv(hue, 0.5, 0.95);
-	scale = 0.5 + (float) rand() / (float) RAND_MAX;
-	speed = 1 + rand() % 4;
-}
 
-void BackgroundTetromino::render() {
-	al_draw_tinted_scaled_rotated_bitmap(tile, color, hw, hh, x, y, scale, scale, angle, flags);
+	scale = 5.0 + 10 * (float) rand() / (float) RAND_MAX;
+	speed = scale / 10.0;
 }
 
 BackgroundScreen::BackgroundScreen() {
 	cout << "Creating Background Screen" << endl;
 
-	// Load all tetromino shapes
-	shapes.push_back(al_load_bitmap("assets/gfx/bg_l.png"));
-	shapes.push_back(al_load_bitmap("assets/gfx/bg_s.png"));
-	shapes.push_back(al_load_bitmap("assets/gfx/bg_t.png"));
-	shapes.push_back(al_load_bitmap("assets/gfx/bg_cube.png"));
-	shapes.push_back(al_load_bitmap("assets/gfx/bg_line.png"));
-
 	// Create "particles" for each shape
 	for (int i = 0; i < count; i++) {
-		ALLEGRO_BITMAP *temp = shapes[rand() % shapes.size()];
 		tetrominos.push_back(new BackgroundTetromino());
-		tetrominos.back()->reset(temp);
+		tetrominos.back()->reset();
+		tetrominos.back()->loc.y = rand() % Director::height;
 	}
 }
 
 BackgroundScreen::~BackgroundScreen() {
 	cout << "Destroying Background Screen" << endl;
-	// TODO: clean out tetrominoes
-	while (!shapes.empty()) {
-		auto tile = shapes.back();
-		shapes.pop_back();
-		al_destroy_bitmap(tile);
-	}
 
 	while (!tetrominos.empty()) {
 		auto tetromino = tetrominos.back();
@@ -73,17 +45,29 @@ BackgroundScreen::~BackgroundScreen() {
 
 void BackgroundScreen::update() {
 	for (auto tetromino : tetrominos) {
-		tetromino->y += tetromino->speed;
+		tetromino->loc.y += tetromino->speed;
 
-		if (tetromino->y > Director::height + tetromino->hh) {
-			ALLEGRO_BITMAP *temp = shapes[rand() % shapes.size()];
-			tetromino->reset(temp);
+		// TODO: take into account the size
+		if (tetromino->loc.y > Director::height) {
+			tetromino->reset();
 		}
 	}
 }
 
 void BackgroundScreen::render() {
-	for (auto tetromino : tetrominos) {
-		tetromino->render();
+	for (auto t : tetrominos) {
+		for (int i = 0; i < t->matrix.size(); i++) {
+			for (int j = 0; j < t->matrix.size(); j++) {
+				auto block = t->matrix[j][i];
+				if (block.on) {
+					al_draw_rectangle(
+							t->loc.x + i * base_size * t->scale,
+							t->loc.y + j * base_size * t->scale,
+							t->loc.x + (i + 1) * base_size * t->scale,
+							t->loc.y + (j + 1) * base_size * t->scale,
+							t->color, 2);
+				}
+			}
+		}
 	}
 }
