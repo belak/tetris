@@ -7,7 +7,7 @@
 
 using namespace std;
 
-#define FALL_LENGTH 0.25
+#define FALL_LENGTH 0.5
 #define QUEUE_SIZE 5
 
 // TODO:
@@ -339,23 +339,33 @@ void GameScreen::render() {
 
 	// Draw held piece
 	// TODO: Don't hard code 5
-	al_draw_rectangle(start_x - line_size - cell_size * 5, start_y + line_size + cell_size * 5,
-			start_x - line_size, start_y - line_size,
+	al_draw_rectangle(
+			start_x - line_size - cell_size * 5,
+			start_y - line_size,
+			start_x - line_size,
+			start_y + line_size + cell_size * 5,
 			al_map_rgb(255, 255, 255), line_size);
 
-	/*if (has_stored) {
+	if (has_stored) {
 		auto bound = store.bound();
 		float cx = bound.second.x - bound.first.x;
 		float cy = bound.second.y - bound.first.y;
-		for (int i = 0; i < current.matrix.size(); i++) {
-			for (int j = 0; j < current.matrix.size(); j++) {
-				auto block = current.matrix[j][i];
-				al_draw_rectangle(start_x - line_size - (cell_size * 5 / 2) - cx, start_y + line_size + (cell_size * 5 / 2) + cy,
-						start_x - line_size - cx, start_y - line_size - cy,
-						block.color, line_size);
+
+		for (int i = 0; i < store.matrix.size(); i++) {
+			for (int j = 0; j < store.matrix.size(); j++) {
+				auto block = store.matrix[j][i];
+				if (block.on) {
+					// This is all drawn using black magic.
+					al_draw_rectangle(
+							start_x - line_size + cell_size * (i - cx / 2 - 3 - bound.first.x),
+							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y),
+							start_x - line_size + cell_size * (i - cx / 2 - 3 - bound.first.x + 1),
+							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y + 1),
+							block.color, line_size);
+				}
 			}
 		}
-	}*/
+	}
 
 
 	// Draw the grid. A digital frontier. I tried to picture clusters of information as they moved
@@ -408,9 +418,14 @@ void GameScreen::render() {
 				}
 			}
 		}
+
 	} else {
 		// If not running
 	}
+
+	al_draw_circle(0, 0, 10, al_map_rgb(255, 255, 255), 0);
+	al_draw_circle(start_x, start_y, 10, al_map_rgb(255, 0, 255), 0);
+	al_draw_circle(start_x - line_size, start_y - line_size, 2, al_map_rgb(255, 0, 255), 0);
 }
 
 void GameScreen::sanitizeCurrent() {

@@ -18,7 +18,7 @@ void BackgroundTetromino::reset() {
 
 	color = al_color_hsv(hue, 0.5, 0.95);
 
-	scale = 5.0 + 10 * (float) rand() / (float) RAND_MAX;
+	scale = 5.0 + 15 * (float) rand() / (float) RAND_MAX;
 	speed = scale / 10.0;
 }
 
