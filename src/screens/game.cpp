@@ -422,10 +422,6 @@ void GameScreen::render() {
 	} else {
 		// If not running
 	}
-
-	al_draw_circle(0, 0, 10, al_map_rgb(255, 255, 255), 0);
-	al_draw_circle(start_x, start_y, 10, al_map_rgb(255, 0, 255), 0);
-	al_draw_circle(start_x - line_size, start_y - line_size, 2, al_map_rgb(255, 0, 255), 0);
 }
 
 void GameScreen::sanitizeCurrent() {
