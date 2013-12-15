@@ -36,7 +36,6 @@ private:
 	float move_timer = 0.0;
 	float lock_timer = 0.0;
 	bool running = true;
-	bool stabilize = false;
 
 	std::vector<std::vector<Block>> grid;
 	Tetromino current;

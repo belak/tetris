@@ -42,7 +42,7 @@ if(DEBUG)
 endif()
 
 # Make sure we get all warnings and that we're using C++11
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-sign-compare")
 
 pkg_check_modules(
 	ALLEGRO REQUIRED

@@ -183,9 +183,11 @@ void GameScreen::update() {
 				switch (iev.keyboard.keycode) {
 				case ALLEGRO_KEY_ESCAPE:
 					// TODO: display a confirmation screen
+					// Maybe just pause the game
 					Director::pop();
 					return;
 				case ALLEGRO_KEY_Z:
+					// A counter clockwise rotation is just rotating right 3 times
 					current.rotate();
 					current.rotate();
 				case ALLEGRO_KEY_UP:
@@ -213,7 +215,6 @@ void GameScreen::update() {
 					} else {
 						current = copy;
 					}
-					
 					break;
 				case ALLEGRO_KEY_LEFT:
 					current.loc.x -= 1;
@@ -253,6 +254,7 @@ void GameScreen::update() {
 		if (hyper_speed) {
 			move_timer = FALL_LENGTH;
 			current.loc = ghost.loc;
+			lock_timer = timer_freq;
 		}
 
 		// Move the timers forward
@@ -264,10 +266,39 @@ void GameScreen::update() {
 			// Conveniently enough, we already know where this needs to go
 			// The ghost will be in the final location
 			if (current.loc == ghost.loc) {
-				if (!stabilize) {
+				// SRS has a separate lock timer, so if a movement happens, we can't stabilize
+				if (lock_timer > timer_freq) {
+					running = false;
+
+					// If all of the positions are above the top, we just lost
+					for (int i = 0; i < current.matrix.size(); i++) {
+						for (int j = 0; j < current.matrix.size(); j++) {
+							auto block = current.matrix[j][i];
+							int x = (int)(current.loc.x + i);
+							int y = (int)(current.loc.y + j);
+							if (block.on && y >= 0) {
+								grid[y][x] = block;
+								running = true;
+							}
+						}
+					}
+
+					// If we just lost, we don't need to run any more calculations
+					if (!running) {
+						return;
+					}
+
+					// Make sure we don't have anything to remove
+					cleanGrid();
+
+					// Pop from the queue and recalculate the ghost
+					generateTetromino();
+					calculateGhost();
+
+					// Block is now stabilized
 					lock_timer = 0.0;
+					move_timer = 0.0;
 				}
-				stabilize = true;
 			} else {
 				// Reset the movement timer every time we move
 				move_timer = 0.0;
@@ -275,43 +306,6 @@ void GameScreen::update() {
 			}
 		}
 
-		// If we need to set it in stone
-		if (stabilize) {
-			// SRS has a separate lock timer, so if a movement happens, we can't stabilize
-			if (lock_timer > timer_freq) {
-				running = false;
-
-				// If all of the positions are above the top, we just lost
-				for (int i = 0; i < current.matrix.size(); i++) {
-					for (int j = 0; j < current.matrix.size(); j++) {
-						auto block = current.matrix[j][i];
-						int x = (int)(current.loc.x + i);
-						int y = (int)(current.loc.y + j);
-						if (block.on && y >= 0) {
-							grid[y][x] = block;
-							running = true;
-						}
-					}
-				}
-
-				// If we just lost, we don't need to run any more calculations
-				if (!running) {
-					return;
-				}
-
-				// Make sure we don't have anything to remove
-				cleanGrid();
-
-				// Pop from the queue and recalculate the ghost
-				generateTetromino();
-				calculateGhost();
-
-				// Block is now stabilized
-				stabilize = false;
-				lock_timer = 0.0;
-				move_timer = 0.0;
-			}
-		}
 	} else {
 		// If not running
 		
