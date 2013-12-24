@@ -13,6 +13,9 @@ using namespace std;
 
 // TODO:
 // Display upcoming
+// Display score
+// Score T-splns correctly
+// Make it clearer when lines are cleared
 // Make sure move locks are done in right places
 // 2 piece buffer above grid (and change death to come with this if something spawns on top)
 // Options for lock style, etc
@@ -90,7 +93,23 @@ void GameScreen::cleanGrid() {
 	}
 
 	if (num_cleared == 4) {
+		tetris_in_a_row += 1;
 		cout << "Tetris!" << endl;
+		if (tetris_in_a_row == 1) {
+			points += 800;
+		} else if (tetris_in_a_row == 2) {
+			// This is 1200 + (1200-800)
+			points += 1600;
+		} else {
+			points += 1200;
+		}
+	} else {
+		points += 100 * num_cleared;
+		tetris_in_a_row = 0;
+	}
+
+	if (num_cleared > 0) {
+		cout << points << endl;
 	}
 
 	// Push new lines onto the beginning until we're at the right size

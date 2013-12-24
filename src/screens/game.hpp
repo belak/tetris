@@ -26,6 +26,8 @@ private:
 
 	int level = 1;
 	int lines = 0;
+	int tetris_in_a_row = 0;
+	int points = 0;
 
 	int width = 10;
 	int height = 20;
