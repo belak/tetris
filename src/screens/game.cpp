@@ -4,6 +4,7 @@
 #include <allegro5/allegro_primitives.h>
 
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -11,11 +12,8 @@ using namespace std;
 #define QUEUE_SIZE 5
 
 // TODO:
-// Display held piece
 // Display upcoming
-// Make it SRS standard
 // Make sure move locks are done in right places
-// Make jump down instant in stead of waiting for a lock
 // 2 piece buffer above grid (and change death to come with this if something spawns on top)
 // Options for lock style, etc
 
@@ -59,7 +57,7 @@ bool GameScreen::validPosition() {
 
 void GameScreen::cleanGrid() {
 	// Remove lines if they're full
-	// NOTE:we do this in reverse order
+	// NOTE: we do this in reverse order
 	// so we can do it all in one swoop without
 	// the ids changing on us
 	for (int i = grid.size() - 1; i >= 0; i--) {
@@ -75,6 +73,17 @@ void GameScreen::cleanGrid() {
 		if (on) {
 			cout << "Removing line" << endl;
 			grid.erase(grid.begin() + i);
+
+			// Update variables
+			int tmp = level;
+			lines += 1;
+			level = ceil((float) lines / 10);
+			if (level > 10) {
+				level = 10;
+			}
+			if (level != tmp) {
+				cout << "Now on level " << level << endl;
+			}
 		}
 	}
 
@@ -145,7 +154,7 @@ void GameScreen::calculateGhost() {
 void GameScreen::update() {
 	if (running) {
 		bool hyper_speed = false;
-		float timer_freq = FALL_LENGTH;
+		float timer_freq = (11 - level) * 0.05;
 
 		auto copy = current;
 		while(!al_is_event_queue_empty(Director::input)) {
@@ -327,17 +336,21 @@ void GameScreen::update() {
 
 void GameScreen::render() {
 	// Draw border
-	al_draw_rectangle(start_x - line_size, start_y - line_size,
-			start_x + cell_size * width + line_size, start_y + cell_size * height + line_size,
+	al_draw_rectangle(
+			start_x - line_size,
+			start_y - line_size,
+			start_x + cell_size * width + line_size,
+			start_y + cell_size * height + line_size,
 			al_map_rgb(255, 255, 255), line_size);
 
 	// Draw held piece
 	// TODO: Don't hard code 5
+	int cell_width = 5;
 	al_draw_rectangle(
-			start_x - line_size - cell_size * 5,
+			start_x - line_size - cell_size * cell_width,
 			start_y - line_size,
 			start_x - line_size,
-			start_y + line_size + cell_size * 5,
+			start_y + line_size + cell_size * cell_width,
 			al_map_rgb(255, 255, 255), line_size);
 
 	if (has_stored) {
@@ -359,6 +372,39 @@ void GameScreen::render() {
 				}
 			}
 		}
+	}
+
+	// Draw upcoming pieces
+	int k = 0;
+	for (auto store : upcoming) {
+		al_draw_rectangle(
+				start_x + cell_size * width + line_size,
+				start_y - line_size + k * (cell_size * cell_width + line_size),
+				start_x + cell_size * width + line_size + cell_size * cell_width,
+				start_y /*- line_size*/ + cell_size * cell_width + k * (cell_size * cell_width + line_size),
+				al_map_rgb(255, 255, 255), line_size);
+
+		auto bound = store.bound();
+		float cx = bound.second.x - bound.first.x;
+		float cy = bound.second.y - bound.first.y;
+
+		for (int i = 0; i < store.matrix.size(); i++) {
+			for (int j = 0; j < store.matrix.size(); j++) {
+				auto block = store.matrix[j][i];
+				if (block.on) {
+					// This is all drawn using black magic.
+					// This one even more so than the stored piece
+					al_draw_rectangle(
+							start_x + cell_size * width + 0.8 * line_size + cell_size * (i - cx / 2 - 3 - bound.first.x) + cell_size * cell_width,
+							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y) + k * (cell_size * cell_width + line_size),
+							start_x + cell_size * width + 0.8 * line_size + cell_size * (i - cx / 2 - 3 - bound.first.x + 1) + cell_size * cell_width,
+							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y + 1) + k * (cell_size * cell_width + line_size),
+							block.color, line_size);
+				}
+			}
+		}
+
+		k += 1;
 	}
 
 

@@ -24,6 +24,9 @@ private:
 	void resetCurrent();
 	bool validPosition();
 
+	int level = 1;
+	int lines = 0;
+
 	int width = 10;
 	int height = 20;
 	int margin = 2;
