@@ -60,6 +60,7 @@ void GameScreen::cleanGrid() {
 	// NOTE: we do this in reverse order
 	// so we can do it all in one swoop without
 	// the ids changing on us
+	int num_cleared = 0;
 	for (int i = grid.size() - 1; i >= 0; i--) {
 		bool on = true;
 		for (int j = 0; j < grid[i].size(); j++) {
@@ -72,6 +73,7 @@ void GameScreen::cleanGrid() {
 
 		if (on) {
 			cout << "Removing line" << endl;
+			num_cleared += 1;
 			grid.erase(grid.begin() + i);
 
 			// Update variables
@@ -85,6 +87,10 @@ void GameScreen::cleanGrid() {
 				cout << "Now on level " << level << endl;
 			}
 		}
+	}
+
+	if (num_cleared == 4) {
+		cout << "Tetris!" << endl;
 	}
 
 	// Push new lines onto the beginning until we're at the right size

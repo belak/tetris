@@ -59,7 +59,7 @@ Tetromino::Tetromino() {
 				{1, 1, 1},
 				{0, 0, 0}
 			};
-			color = al_map_rgb(128, 0, 128);
+			color = al_map_rgb(255, 0, 255);
 			break;
 		case 5:
 			// Cube
