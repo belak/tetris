@@ -41,7 +41,7 @@ Tetromino::Tetromino() {
 				{1, 1, 0},
 				{0, 0, 0}
 			};
-			color = al_map_rgb(0, 255, 0);
+			color = al_map_rgb(128, 255, 0);
 			break;
 		case 3:
 			// S reversed
