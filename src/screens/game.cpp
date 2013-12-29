@@ -371,11 +371,12 @@ void GameScreen::render() {
 	// Draw held piece
 	// TODO: Don't hard code 5
 	int cell_width = 5;
+	float stored_scale = 0.75;
 	al_draw_rectangle(
-			start_x - line_size - cell_size * cell_width,
+			start_x - line_size - cell_size * cell_width * stored_scale,
 			start_y - line_size,
 			start_x - line_size,
-			start_y + line_size + cell_size * cell_width,
+			start_y + line_size + cell_size * cell_width * stored_scale,
 			al_map_rgb(255, 255, 255), line_size);
 
 	if (has_stored) {
@@ -389,10 +390,10 @@ void GameScreen::render() {
 				if (block.on) {
 					// This is all drawn using black magic.
 					al_draw_rectangle(
-							start_x - line_size + cell_size * (i - cx / 2 - 3 - bound.first.x),
-							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y),
-							start_x - line_size + cell_size * (i - cx / 2 - 3 - bound.first.x + 1),
-							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y + 1),
+							start_x - line_size + cell_size * stored_scale * (i - cx / 2 - 3 - bound.first.x),
+							start_y - line_size + cell_size * stored_scale * (j - cy / 2 + 2 - bound.first.y),
+							start_x - line_size + cell_size * stored_scale * (i - cx / 2 - 3 - bound.first.x + 1),
+							start_y - line_size + cell_size * stored_scale * (j - cy / 2 + 2 - bound.first.y + 1),
 							block.color, line_size);
 				}
 			}
@@ -404,9 +405,9 @@ void GameScreen::render() {
 	for (auto store : upcoming) {
 		al_draw_rectangle(
 				start_x + cell_size * width + line_size,
-				start_y - line_size + k * (cell_size * cell_width + line_size),
-				start_x + cell_size * width + line_size + cell_size * cell_width,
-				start_y /*- line_size*/ + cell_size * cell_width + k * (cell_size * cell_width + line_size),
+				start_y - line_size + k * (cell_size * cell_width * stored_scale + line_size),
+				start_x + cell_size * width + line_size + cell_size * cell_width * stored_scale,
+				start_y /*- line_size*/ + cell_size * cell_width * stored_scale + k * (cell_size * cell_width * stored_scale + line_size),
 				al_map_rgb(255, 255, 255), line_size);
 
 		auto bound = store.bound();
@@ -420,10 +421,10 @@ void GameScreen::render() {
 					// This is all drawn using black magic.
 					// This one even more so than the stored piece
 					al_draw_rectangle(
-							start_x + cell_size * width + 0.8 * line_size + cell_size * (i - cx / 2 - 3 - bound.first.x) + cell_size * cell_width,
-							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y) + k * (cell_size * cell_width + line_size),
-							start_x + cell_size * width + 0.8 * line_size + cell_size * (i - cx / 2 - 3 - bound.first.x + 1) + cell_size * cell_width,
-							start_y - line_size + cell_size * (j - cy / 2 + 2 - bound.first.y + 1) + k * (cell_size * cell_width + line_size),
+							start_x + cell_size * width + 0.8 * line_size + cell_size * stored_scale * (i - cx / 2 - 3 - bound.first.x) + cell_size * cell_width * stored_scale,
+							start_y - line_size + cell_size * stored_scale * (j - cy / 2 + 2 - bound.first.y) + k * (cell_size * cell_width * stored_scale + line_size),
+							start_x + cell_size * width + 0.8 * line_size + cell_size * stored_scale * (i - cx / 2 - 3 - bound.first.x + 1) + cell_size * cell_width * stored_scale,
+							start_y - line_size + cell_size * stored_scale * (j - cy / 2 + 2 - bound.first.y + 1) + k * (cell_size * cell_width * stored_scale + line_size),
 							block.color, line_size);
 				}
 			}
