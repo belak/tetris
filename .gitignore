@@ -2,9 +2,8 @@
 *.a
 tetris
 
-# CMake stuff
-CMakeCache.txt
-CMakeFiles
-cmake_install.cmake
-Makefile
+# Build stuff
 build
+
+# Random crap
+.DS_Store

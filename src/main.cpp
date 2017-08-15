@@ -10,6 +10,13 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	cout << "Starting Tetris" << endl;
 
+	// Asset workarounds
+	if (argc > 1) {
+		if (!al_change_directory(argv[1])) {
+			cout << "Failed to change to assets dir" << endl;
+		}
+	}
+
 	// Start up
 	Director::init();
 
